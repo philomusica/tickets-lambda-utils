@@ -1,4 +1,4 @@
-module aithub.com/philomusica/tickets-lambda-utils
+module github.com/philomusica/tickets-lambda-utils
 
 go 1.21
 
