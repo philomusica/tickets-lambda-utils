@@ -1,6 +1,6 @@
 package databaseHandler
 
-import "aithub.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
+import "github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
 
 // Concert is a model of a concert which contains basic info regarding a concert, taken from dynamoDB
 type Concert struct {

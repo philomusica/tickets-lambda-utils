@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"time"
 
-	"aithub.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
-	"aithub.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"

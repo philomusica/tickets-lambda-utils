@@ -3,9 +3,9 @@ package sesEmailHandler_test
 import (
 	"testing"
 
-	"aithub.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
-	"aithub.com/philomusica/tickets-lambda-utils/lib/emailHandler/sesEmailHandler"
-	"aithub.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/emailHandler/sesEmailHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
 	"github.com/aws/aws-sdk-go/service/sesv2/sesv2iface"
 )
 

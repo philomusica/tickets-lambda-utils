@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"aithub.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
-	"aithub.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
