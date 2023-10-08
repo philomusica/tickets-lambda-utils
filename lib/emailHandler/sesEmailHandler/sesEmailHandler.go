@@ -84,7 +84,7 @@ func buildAdmitString(order paymentHandler.Order) string {
 // ===============================================================================================================================
 
 // GenerateTicketPDF takes an order struct and returns a PDF file in a byte array and an error if fails
-func (s SESEmailHandler) GenerateTicketPDF(order paymentHandler.Order, concert databaseHandler.Concert, includeQRCode bool, redeemTicketURL string) (attachment []byte) {
+func (s SESEmailHandler) GenerateTicketPDF(order paymentHandler.Order, concert databaseHandler.Concert, includeQRCode bool) (attachment []byte) {
 	pdf := gopdf.GoPdf{}
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 	marginSize := 30.0
@@ -110,9 +110,9 @@ func (s SESEmailHandler) GenerateTicketPDF(order paymentHandler.Order, concert d
 	pdf.SetY(pdf.GetY() + 30.0)
 	addDetailToPDF(&pdf, "Location", concert.Location)
 
-	if includeQRCode && redeemTicketURL != "" {
+	if includeQRCode {
 		var qrcodeImage []byte
-		qrcodeImage, _ = qrcode.Encode(fmt.Sprintf("%s/%s/%s", redeemTicketURL, concert.ID, order.OrderReference), qrcode.Medium, 360)
+		qrcodeImage, _ = qrcode.Encode(fmt.Sprintf("%s-%s", concert.ID, order.OrderReference), qrcode.Medium, 360)
 		ih, _ := gopdf.ImageHolderByBytes(qrcodeImage)
 		pdf.ImageByHolder(ih, gopdf.PageSizeA4.W/2+30.0, pdf.GetY(), nil)
 	}

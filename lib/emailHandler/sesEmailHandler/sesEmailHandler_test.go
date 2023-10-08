@@ -38,7 +38,7 @@ func TestGenerateTicketPDF(t *testing.T) {
 
 	svc := mockGenerateTicketPDFSuccess{}
 	sesEmailHandler := sesEmailHandler.New(svc, "tickets@philomusica.org.uk")
-	attachment := sesEmailHandler.GenerateTicketPDF(order, concert, true, "https://api.philomusica.org.uk/ticket-redeem")
+	attachment := sesEmailHandler.GenerateTicketPDF(order, concert, true)
 
 	if len(attachment) == 0 {
 		t.Error("Expected attachment file , got an empty slice")
