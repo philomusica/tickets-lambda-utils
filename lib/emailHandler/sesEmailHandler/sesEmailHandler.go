@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
+	"time"
 
-	"github.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
-	"github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sesv2"
 	"github.com/aws/aws-sdk-go/service/sesv2/sesv2iface"
+	"github.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/emailHandler"
+	"github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
 	"github.com/signintech/gopdf"
 	"github.com/skip2/go-qrcode"
 	"gopkg.in/gomail.v2"
@@ -83,6 +86,40 @@ func buildAdmitString(order paymentHandler.Order) string {
 // PUBLIC FUNCTIONS
 // ===============================================================================================================================
 
+func (s SESEmailHandler) CreateCalendarInvites(title string, location string, start int64, description string) (calLinks emailHandler.CalendarLinks) {
+	escTitle := url.QueryEscape(title)
+	escLocation := url.QueryEscape(location)
+	escDescription := url.QueryEscape(description)
+
+	tStart := time.Unix(start, 0)
+	tEnd := tStart.Add(time.Hour * 2)
+	
+	gCalFormat := "20060102T150405Z"
+	gDates := url.QueryEscape(fmt.Sprintf("%s/%s", tStart.Format(gCalFormat), tEnd.Format(gCalFormat)))
+
+	outEnd := url.QueryEscape(tEnd.Format(time.RFC3339))
+	outStart := url.QueryEscape(tStart.Format(time.RFC3339))
+
+	calLinks.GoogleCalendarLink = fmt.Sprintf("https://calendar.google.com/calendar/render?action=TEMPLATE&dates=%s&details=%s&location=%s&text=%s", gDates, escDescription, escLocation, escTitle)
+	calLinks.OutlookCalendarLink = fmt.Sprintf("https://outlook.live.com/calendar/0/action/compose?body=%s&enddt=%s&location=%s&path=%%2Fcalendar%%2Faction%%2Fcompose&rru=addevent&startdt=%s&subject=%s", escDescription, outEnd, escLocation, outStart, escTitle)
+
+	// Construct the ICS file contents
+	var sb bytes.Buffer
+	sb.WriteString("BEGIN:VCALENDAR\n")
+	sb.WriteString("VERSION:2.0\n")
+	sb.WriteString("BEGIN:VEVENT\n")
+	sb.WriteString(fmt.Sprintf("DTSTART:%s\n", tStart.Format(gCalFormat)))
+	sb.WriteString(fmt.Sprintf("DTEND:%s\n", tEnd.Format(gCalFormat)))
+	sb.WriteString(fmt.Sprintf("SUMMARY:%s\n", title))
+	sb.WriteString(fmt.Sprintf("DESCRIPTION:%s\n", description))
+	sb.WriteString(fmt.Sprintf("LOCATION:%s\n", location))
+	sb.WriteString("END:VEVENT\n")
+	sb.WriteString("END:VCALENDAR\n")
+
+	calLinks.ICSFile = sb.Bytes()
+
+	return
+}
 // GenerateTicketPDF takes an order struct and returns a PDF file in a byte array and an error if fails
 func (s SESEmailHandler) GenerateTicketPDF(order paymentHandler.Order, concert databaseHandler.Concert, includeQRCode bool) (attachment []byte) {
 	pdf := gopdf.GoPdf{}
@@ -133,12 +170,13 @@ func New(svc sesv2iface.SESV2API, senderAddress string) SESEmailHandler {
 }
 
 // SendEmail takes an order struct and attachment (in bytes) and sends an email to the customer, using the AWS SES v2 API. Returns an error if fails, or nil if successful
-func (s SESEmailHandler) SendEmail(order paymentHandler.Order, attachment []byte) (err error) {
+func (s SESEmailHandler) SendEmail(order paymentHandler.Order, attachment []byte, calendarLinks emailHandler.CalendarLinks) (err error) {
+	icsFileName := "concert.ics"
 	msg := gomail.NewMessage()
 	msg.SetHeader("To", order.Email)
 	msg.SetHeader("From", s.senderAddress)
 	msg.SetHeader("Subject", "Order Confirmation")
-	msg.SetBody("text/html", fmt.Sprintf("<div>Dear %s</div><br><div>Many thanks for purchasing tickets to Philomusica's concert. Your eTicket is attached as a PDF to this email. Please bring this PDF with you to the concert, either in digital or paper form.</div><br><div>We look forward to seeing you there!</div><div>Philomusica</div><br><br><div>Please consider the enviornment before printing your eTicket</div>", order.FirstName))
+	msg.SetBody("text/html", fmt.Sprintf("<div>Dear %s</div><br><div>Many thanks for purchasing tickets to Philomusica's concert. Your eTicket is attached as a PDF to this email. Please bring this PDF with you to the concert, either in digital or paper form.</div><br><div>We look forward to seeing you there!</div><div>Philomusica</div><br><br><a href=\"%s\">Add to Google calendar</a><br><a href=\"%s\">Add to Outlook calendar</a><br><div>For Apple's iCalendar, please download the %s file and upload it to your calendar</div><div>Please consider the environment before printing your eTicket</div>", order.FirstName, calendarLinks.GoogleCalendarLink, calendarLinks.OutlookCalendarLink, icsFileName))
 	msg.Attach(
 		"philomusica-concert-tickets.pdf",
 		gomail.SetCopyFunc(func(w io.Writer) error {
@@ -147,6 +185,16 @@ func (s SESEmailHandler) SendEmail(order paymentHandler.Order, attachment []byte
 		}),
 		gomail.SetHeader(map[string][]string{"Content-Type": {"application/pdf"}}),
 	)
+
+	msg.Attach(
+		icsFileName,
+		gomail.SetCopyFunc(func(w io.Writer) error {
+			_, err := w.Write(calendarLinks.ICSFile)
+			return err
+		}),
+		gomail.SetHeader(map[string][]string{"Content-Type": {"text/calendar"}}),
+	)
+
 
 	var rawEmail bytes.Buffer
 	msg.WriteTo(&rawEmail)

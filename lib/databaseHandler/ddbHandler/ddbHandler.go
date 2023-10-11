@@ -42,7 +42,6 @@ func convertEpochSecsToDateAndTimeStrings(dateTime int64) (date string, timeStam
 // generateRandomString takes a uint8 indicating the num of random characters to generate, and returns the random in the form of a string
 func generateRandomString(size uint8) string {
 	charSet := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-	rand.Seed(time.Now().UnixNano())
 	arr := make([]byte, size)
 	var i uint8
 	for i = 0; i < size; i++ {

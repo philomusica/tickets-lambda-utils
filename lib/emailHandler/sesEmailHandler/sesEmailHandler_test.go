@@ -3,10 +3,10 @@ package sesEmailHandler_test
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/sesv2/sesv2iface"
 	"github.com/philomusica/tickets-lambda-utils/lib/databaseHandler"
 	"github.com/philomusica/tickets-lambda-utils/lib/emailHandler/sesEmailHandler"
 	"github.com/philomusica/tickets-lambda-utils/lib/paymentHandler"
-	"github.com/aws/aws-sdk-go/service/sesv2/sesv2iface"
 )
 
 type mockGenerateTicketPDFSuccess struct {
@@ -44,4 +44,10 @@ func TestGenerateTicketPDF(t *testing.T) {
 		t.Error("Expected attachment file , got an empty slice")
 	}
 
+}
+
+func TestCalendarFormat(t *testing.T) {
+	svc := mockGenerateTicketPDFSuccess{}
+	sesEmailHandler := sesEmailHandler.New(svc, "tickets@philomusica.org.uk")
+	sesEmailHandler.CreateCalendarInvites("Philomusica Presents Messiah", "St Stephen's Barbourne, Worcester", 1699731000, "A concert")
 }
