@@ -113,6 +113,7 @@ func (s SESEmailHandler) CreateCalendarInvites(title string, location string, st
 	sb.WriteString(fmt.Sprintf("SUMMARY:%s\n", title))
 	sb.WriteString(fmt.Sprintf("DESCRIPTION:%s\n", description))
 	sb.WriteString(fmt.Sprintf("LOCATION:%s\n", location))
+	sb.WriteString("ORGANIZER;CN=Philomusica:mailto:tickets@philomusica.org.uk\n")
 	sb.WriteString("END:VEVENT\n")
 	sb.WriteString("END:VCALENDAR\n")
 
